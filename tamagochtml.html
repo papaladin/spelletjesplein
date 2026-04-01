@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Magic Pet - Compagnon magique</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f9e6f0 0%, #ffe6f0 100%);
+      font-family: 'Segoe UI', 'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .game-container {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(3px);
+      border-radius: 80px 80px 60px 60px;
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2), inset 0 1px 4px rgba(255,255,255,0.8);
+      padding: 20px 20px 35px;
+      text-align: center;
+    }
+
+    .pet-area {
+      background: #fff0e0;
+      border-radius: 90px;
+      margin: 10px 0 20px;
+      padding: 20px;
+      box-shadow: inset 0 0 0 3px white, 0 10px 20px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .pet-avatar {
+      display: inline-block;
+      filter: drop-shadow(4px 8px 12px rgba(0,0,0,0.2));
+      transition: transform 0.2s ease;
+      cursor: pointer;
+      font-size: 120px;
+    }
+
+    .stage-0 .pet-avatar { font-size: 80px; }
+    .stage-1 .pet-avatar { font-size: 100px; }
+    .stage-2 .pet-avatar { font-size: 120px; }
+    .stage-3 .pet-avatar { font-size: 150px; }
+
+    .mood-badge {
+      font-size: 36px;
+      margin-top: -20px;
+      background: #fff9c4;
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 60px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .stats {
+      background: #fce4ec;
+      border-radius: 50px;
+      padding: 15px 20px;
+      margin: 20px 0;
+    }
+
+    .stat-item {
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-label {
+      font-size: 28px;
+      width: 60px;
+      text-align: left;
+    }
+
+    progress {
+      flex: 1;
+      height: 28px;
+      border-radius: 20px;
+      overflow: hidden;
+      background-color: #ffe0e7;
+    }
+    progress::-webkit-progress-bar {
+      background-color: #ffe0e7;
+      border-radius: 20px;
+    }
+    progress::-webkit-progress-value {
+      background-color: #f9a8d4;
+      border-radius: 20px;
+      transition: width 0.2s;
+    }
+    progress::-moz-progress-bar {
+      background-color: #f9a8d4;
+      border-radius: 20px;
+    }
+
+    .stat-value {
+      min-width: 55px;
+      font-weight: bold;
+      font-size: 20px;
+      color: #b34180;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    button {
+      background: #ffd966;
+      border: none;
+      font-size: 28px;
+      padding: 15px 10px;
+      border-radius: 60px;
+      font-weight: bold;
+      color: #5e2a3e;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #b97f10;
+      transition: 0.05s linear;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #b97f10;
+    }
+
+    .extra-panel {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    .extra-btn {
+      background: #c8e6f5;
+      font-size: 22px;
+      padding: 10px 20px;
+      box-shadow: 0 4px 0 #6f9eb3;
+    }
+
+    .message-area {
+      background: #f5e6d3;
+      border-radius: 40px;
+      padding: 12px;
+      margin: 15px 0 5px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #7a4c2c;
+      min-height: 75px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .footer {
+      font-size: 14px;
+      color: #cfa5b0;
+      margin-top: 15px;
+    }
+
+    .age-bar {
+      background: #ffe0b5;
+      border-radius: 30px;
+      padding: 8px 12px;
+      margin: 10px 0 0;
+      font-weight: bold;
+    }
+
+    @media (max-width: 550px) {
+      .game-container { padding: 15px; }
+      .stat-label { font-size: 24px; width: 50px; }
+      button { font-size: 24px; padding: 12px 8px; gap: 6px; }
+      .extra-btn { font-size: 20px; }
+      .pet-avatar { font-size: 100px; }
+      .stage-0 .pet-avatar { font-size: 70px; }
+      .stage-3 .pet-avatar { font-size: 130px; }
+    }
+  </style>
+</head>
+<body>
+<div class="game-container" id="gameApp">
+  <div class="pet-area" id="petArea">
+    <div class="pet-avatar" id="petEmoji">🥚</div>
+    <div class="mood-badge" id="moodEmoji">😊</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-item"><span class="stat-label" id="labelHunger">🍎 Faim</span><progress id="hungerBar" value="80" max="100"></progress><span id="hungerVal" class="stat-value">80</span></div>
+    <div class="stat-item"><span class="stat-label" id="labelHappiness">😊 Bonheur</span><progress id="happinessBar" value="80" max="100"></progress><span id="happinessVal" class="stat-value">80</span></div>
+    <div class="stat-item"><span class="stat-label" id="labelEnergy">⚡ Énergie</span><progress id="energyBar" value="80" max="100"></progress><span id="energyVal" class="stat-value">80</span></div>
+    <div class="stat-item"><span class="stat-label" id="labelClean">🧼 Propreté</span><progress id="cleanBar" value="80" max="100"></progress><span id="cleanVal" class="stat-value">80</span></div>
+  </div>
+
+  <div class="age-bar">
+    <span id="ageLabel">🌱 Âge :</span> <span id="ageDisplay">0</span> <span id="ageUnit">min</span>
+    <progress id="ageProgress" value="0" max="1" style="width: 100%; height: 12px; margin-top: 6px;"></progress>
+    <div><span id="stageLabel">Stade :</span> <strong id="speciesName">Œuf</strong></div>
+  </div>
+
+  <div class="actions">
+    <button id="feedBtn">🍎 Nourrir</button>
+    <button id="playBtn" style="display: none;">🎈 Jouer</button>
+    <button id="cleanBtn">🧼 Nettoyer</button>
+    <button id="sleepBtn">🌙 Dormir</button>
+    <button id="magicBtn" style="display: none;">✨ Magie ✨</button>
+  </div>
+
+  <div class="extra-panel">
+    <button id="wakeBtn" class="extra-btn" style="display: none;">☀️ Réveiller</button>
+    <button id="resetBtn" class="extra-btn">✨ Recommencer</button>
+    <button id="muteBtn" class="extra-btn">🔊 Muet</button>
+    <button id="langToggle" class="extra-btn">🇬🇧 English</button>
+  </div>
+
+  <div class="message-area" id="messageBox">
+    ✨ Ton œuf magique attend d'éclore ! ✨
+  </div>
+  <div class="footer" id="footerText">❤️ Prends soin de ton compagnon – la croissance s'arrête s'il est triste ! ❤️</div>
+</div>
+
+<script>
+  // --------------------------------------------------------------
+  // MULTI-LANGUAGE MAGIC PET with BRANCHING EVOLUTION
+  // --------------------------------------------------------------
+  let lang = localStorage.getItem('petLang') || 'fr'; // 'fr' or 'en'
+
+  // ---------- TRANSLATIONS ----------
+  const translations = {
+    ui: {
+      fr: {
+        hungerLabel: "🍎 Faim",
+        happinessLabel: "😊 Bonheur",
+        energyLabel: "⚡ Énergie",
+        cleanLabel: "🧼 Propreté",
+        age: "🌱 Âge :",
+        stage: "Stade :",
+        footer: "❤️ Prends soin de ton compagnon – la croissance s'arrête s'il est triste ! ❤️",
+        feed: "🍎 Nourrir",
+        play: "🎈 Jouer",
+        clean: "🧼 Nettoyer",
+        sleep: "🌙 Dormir",
+        wake: "☀️ Réveiller",
+        reset: "✨ Recommencer",
+        mute: "🔊 Muet",
+        unmute: "🔇 Activer son",
+        magic: "✨ Magie ✨",
+        langToggleEn: "🇬🇧 English",
+        langToggleFr: "🇫🇷 Français"
+      },
+      en: {
+        hungerLabel: "🍎 Hunger",
+        happinessLabel: "😊 Happiness",
+        energyLabel: "⚡ Energy",
+        cleanLabel: "🧼 Cleanliness",
+        age: "🌱 Age:",
+        stage: "Stage:",
+        footer: "❤️ Take care of your pet – growth stops when sad! ❤️",
+        feed: "🍎 Feed",
+        play: "🎈 Play",
+        clean: "🧼 Clean",
+        sleep: "🌙 Sleep",
+        wake: "☀️ Wake up",
+        reset: "✨ Reset",
+        mute: "🔊 Mute",
+        unmute: "🔇 Unmute",
+        magic: "✨ Magic ✨",
+        langToggleEn: "🇬🇧 English",
+        langToggleFr: "🇫🇷 Français"
+      }
+    },
+    messages: {
+      fr: {
+        feed: (reduction) => `🍎 Miam ! Faim -${reduction}, bonheur +3 🍎`,
+        play: (gain, cost) => `🎈 Jeu amusant ! Bonheur +${gain}, énergie -${cost} 🎈`,
+        clean: (gain) => `🧼 Tout propre ! Propreté +${gain} 🧼`,
+        sleep: "💤 Bonne nuit, fais de beaux rêves ! 💤",
+        wake: "☀️ Bonjour ! Il est temps de jouer ! ☀️",
+        magic: (changes) => `✨ Sort magique : ${changes} ✨`,
+        sadGrowthStopped: "😢 Ton compagnon est trop triste pour grandir ! Remonte-lui le moral ! 😢",
+        sadMessage: "😢 Ton compagnon est triste... donne-lui de l'amour ! (croissance arrêtée) 😢",
+        evolveStage1Unicorn: "🐣 Ton œuf éclot ! Un adorable poulain apparaît !",
+        evolveStage1Dragon: "🐣 Un petit lézard magique sort de l'œuf !",
+        evolveStage1Fairy: "🐣 Une fée scintillante naît de l'œuf !",
+        evolveStage1Kitten: "🐣 Un joli chaton sort de l'œuf !",
+        evolveStage2Pony: "🌱 Ton poulain grandit et devient un magnifique poney !",
+        evolveStage2YoungDragon: "🌱 Ton bébé lézard devient un jeune dragon !",
+        evolveStage2Magician: "✨ La fée se transforme en magicien ! ✨",
+        evolveStage2Witch: "🌙 La fée devient une sorcière mystérieuse ! 🌙",
+        evolveStage2Cat: "🐱 Ton chaton grandit et devient un beau chat !",
+        evolveStage3Unicorn: "✨✨ MAGIE ! Ton poney devient une majestueuse LICORNE ! ✨✨",
+        evolveStage3FireDragon: "🔥 Le dragon crache du feu ! Il devient un dragon de feu ! 🔥",
+        evolveStage3IceDragon: "❄️ Le dragon respire un souffle glacé ! Il devient un dragon de glace ! ❄️",
+        evolveStage3Archmage: "✨ Le magicien atteint la sagesse suprême : Archimage ! ✨",
+        evolveStage3Sorceress: "🌙 La sorcière devient une puissante enchanteresse ! 🌙",
+        evolveStage3Lion: "🦁 Ton chat devient un noble lion ! 🦁",
+        evolveStage3Panther: "🐆 Ton chat devient une panthère agile ! 🐆",
+        rainbow: "🌈 Un arc-en-ciel apparaît ! Bonheur +6",
+        candy: "🍬 Un bonbon magique ! Faim -6",
+        sparkle: "✨ Une poussière scintillante nettoie ton compagnon ! Propreté +8",
+        butterfly: "💤 Un petit papillon fait une sieste : énergie +8",
+        fairySong: "🎵 Une fée amie chante ! Bonheur +5, énergie +3",
+        wind: "🍃 Le vent apporte un peu de poussière... Propreté -4",
+        starShower: "⭐ Pluie d'étoiles ! Toutes les stats +2",
+        wakeUpAuto: "🌞 Ton compagnon se réveille en pleine forme ! 🌞",
+        welcomeBack: "🌟 Bon retour, compagnon magique ! 🌟",
+        newEgg: "✨ Un nouvel œuf magique apparaît ! ✨",
+        eggStart: "🥚 Un œuf magique apparaît ! Prends-en soin ! 🥚",
+        cantPlaySleep: "Impossible de jouer pendant le sommeil 😴",
+        cantFeedSleep: "Chut ! Ton compagnon dort 💤",
+        cantCleanSleep: "Ton compagnon dort, impossible de le nettoyer 🧼",
+        tooTired: "Trop fatigué pour jouer ! Laisse-le se reposer 💤",
+        fullEnergy: "Ton compagnon est déjà plein d'énergie ! 🌟",
+        eggCantPlay: "L'œuf ne peut pas jouer pour l'instant...",
+        magicSleep: "Impossible d'utiliser la magie pendant le sommeil.",
+        muteOn: "🔇 Sons désactivés",
+        muteOff: "🔊 Sons activés"
+      },
+      en: {
+        feed: (reduction) => `🍎 Yum! Hunger -${reduction}, happiness +3 🍎`,
+        play: (gain, cost) => `🎈 Fun play! Happiness +${gain}, energy -${cost} 🎈`,
+        clean: (gain) => `🧼 Sparkly clean! Cleanliness +${gain} 🧼`,
+        sleep: "💤 Good night, sweet dreams! 💤",
+        wake: "☀️ Good morning! Time to play! ☀️",
+        magic: (changes) => `✨ Magic spell: ${changes} ✨`,
+        sadGrowthStopped: "😢 Your pet is too sad to grow! Cheer it up! 😢",
+        sadMessage: "😢 Your pet is sad... give it love! (growth stopped) 😢",
+        evolveStage1Unicorn: "🐣 Your egg hatches! An adorable foal appears!",
+        evolveStage1Dragon: "🐣 A tiny magical lizard hatches from the egg!",
+        evolveStage1Fairy: "🐣 A sparkling fairy is born from the egg!",
+        evolveStage1Kitten: "🐣 A cute kitten comes out of the egg!",
+        evolveStage2Pony: "🌱 Your foal grows into a beautiful pony!",
+        evolveStage2YoungDragon: "🌱 Your baby lizard becomes a young dragon!",
+        evolveStage2Magician: "✨ The fairy turns into a magician! ✨",
+        evolveStage2Witch: "🌙 The fairy becomes a mysterious witch! 🌙",
+        evolveStage2Cat: "🐱 Your kitten grows into a beautiful cat!",
+        evolveStage3Unicorn: "✨✨ MAGIC! Your pony becomes a majestic UNICORN! ✨✨",
+        evolveStage3FireDragon: "🔥 The dragon breathes fire! It becomes a Fire Dragon! 🔥",
+        evolveStage3IceDragon: "❄️ The dragon breathes ice! It becomes an Ice Dragon! ❄️",
+        evolveStage3Archmage: "✨ The magician reaches supreme wisdom: Archmage! ✨",
+        evolveStage3Sorceress: "🌙 The witch becomes a powerful sorceress! 🌙",
+        evolveStage3Lion: "🦁 Your cat becomes a noble lion! 🦁",
+        evolveStage3Panther: "🐆 Your cat becomes an agile panther! 🐆",
+        rainbow: "🌈 A rainbow appears! Happiness +6",
+        candy: "🍬 A magic candy! Hunger -6",
+        sparkle: "✨ Sparkling dust cleans your pet! Cleanliness +8",
+        butterfly: "💤 A little butterfly nap: energy +8",
+        fairySong: "🎵 A friendly fairy sings! Happiness +5, energy +3",
+        wind: "🍃 The wind blows some dust... Cleanliness -4",
+        starShower: "⭐ Star shower! All stats +2",
+        wakeUpAuto: "🌞 Your pet wakes up full of energy! 🌞",
+        welcomeBack: "🌟 Welcome back, magical friend! 🌟",
+        newEgg: "✨ A new magical egg appears! ✨",
+        eggStart: "🥚 A magical egg appears! Take care of it! 🥚",
+        cantPlaySleep: "Can't play while sleeping 😴",
+        cantFeedSleep: "Shh! Your pet is sleeping 💤",
+        cantCleanSleep: "Your pet is sleeping, can't clean 🧼",
+        tooTired: "Too tired to play! Let your pet rest 💤",
+        fullEnergy: "Your pet is already full of energy! 🌟",
+        eggCantPlay: "The egg can't play just yet...",
+        magicSleep: "Can't use magic while sleeping.",
+        muteOn: "🔇 Sounds muted",
+        muteOff: "🔊 Sounds on"
+      }
+    }
+  };
+
+  function t(key, ...args) {
+    let msg = translations.messages[lang][key];
+    if (typeof msg === 'function') {
+      return msg(...args);
+    }
+    return msg || key;
+  }
+
+  function updateUITexts() {
+    const ui = translations.ui[lang];
+    document.getElementById('labelHunger').innerHTML = ui.hungerLabel;
+    document.getElementById('labelHappiness').innerHTML = ui.happinessLabel;
+    document.getElementById('labelEnergy').innerHTML = ui.energyLabel;
+    document.getElementById('labelClean').innerHTML = ui.cleanLabel;
+    document.getElementById('ageLabel').innerHTML = ui.age;
+    document.getElementById('stageLabel').innerHTML = ui.stage;
+    document.getElementById('footerText').innerHTML = ui.footer;
+    document.getElementById('feedBtn').innerHTML = ui.feed;
+    document.getElementById('playBtn').innerHTML = ui.play;
+    document.getElementById('cleanBtn').innerHTML = ui.clean;
+    document.getElementById('sleepBtn').innerHTML = ui.sleep;
+    document.getElementById('wakeBtn').innerHTML = ui.wake;
+    document.getElementById('resetBtn').innerHTML = ui.reset;
+    document.getElementById('magicBtn').innerHTML = ui.magic;
+    const muteBtn = document.getElementById('muteBtn');
+    muteBtn.innerHTML = pet.muted ? ui.unmute : ui.mute;
+    const langToggle = document.getElementById('langToggle');
+    langToggle.innerHTML = lang === 'fr' ? translations.ui.en.langToggleEn : translations.ui.fr.langToggleFr;
+  }
+
+  function toggleLanguage() {
+    lang = lang === 'fr' ? 'en' : 'fr';
+    localStorage.setItem('petLang', lang);
+    updateUITexts();
+    setMessage(t('welcomeBack'));
+  }
+
+  // ---------- GAME STATE ----------
+  let pet = {
+    hunger: 80,
+    happiness: 80,
+    energy: 80,
+    cleanliness: 80,
+    sleeping: false,
+    muted: false,
+    ageMinutes: 0,
+    stage: 0,
+    species: null,
+    variant: null
+  };
+
+  const STAGE_THRESHOLDS = [0, 4, 12, 24];
+
+  let gameInterval = null;
+  let eventTimeout = null;
+
+  // DOM elements
+  const petArea = document.getElementById('petArea');
+  const petEmoji = document.getElementById('petEmoji');
+  const moodEmoji = document.getElementById('moodEmoji');
+  const hungerBar = document.getElementById('hungerBar');
+  const happinessBar = document.getElementById('happinessBar');
+  const energyBar = document.getElementById('energyBar');
+  const cleanBar = document.getElementById('cleanBar');
+  const hungerVal = document.getElementById('hungerVal');
+  const happinessVal = document.getElementById('happinessVal');
+  const energyVal = document.getElementById('energyVal');
+  const cleanVal = document.getElementById('cleanVal');
+  const ageDisplay = document.getElementById('ageDisplay');
+  const ageProgress = document.getElementById('ageProgress');
+  const speciesNameSpan = document.getElementById('speciesName');
+  const messageBox = document.getElementById('messageBox');
+  const wakeBtn = document.getElementById('wakeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const feedBtn = document.getElementById('feedBtn');
+  const playBtn = document.getElementById('playBtn');
+  const cleanBtn = document.getElementById('cleanBtn');
+  const sleepBtn = document.getElementById('sleepBtn');
+  const magicBtn = document.getElementById('magicBtn');
+  const langToggleBtn = document.getElementById('langToggle');
+
+  function getSpeciesEmojiAndName() {
+    if (pet.stage === 0) return { emoji: "🥚", name: lang === 'fr' ? "Œuf" : "Egg" };
+    switch (pet.species) {
+      case "unicorn":
+        if (pet.stage === 1) return { emoji: "🐴", name: lang === 'fr' ? "Poulain" : "Foal" };
+        if (pet.stage === 2) return { emoji: "🐎", name: lang === 'fr' ? "Poney" : "Pony" };
+        return { emoji: "🦄", name: lang === 'fr' ? "Licorne" : "Unicorn" };
+      case "dragon":
+        if (pet.stage === 1) return { emoji: "🦎", name: lang === 'fr' ? "Bébé lézard" : "Baby lizard" };
+        if (pet.stage === 2) return { emoji: "🐲", name: lang === 'fr' ? "Jeune dragon" : "Young dragon" };
+        if (pet.variant === "fire") return { emoji: "🐦‍🔥", name: lang === 'fr' ? "Dragon de feu" : "Fire dragon" };
+        return { emoji: "❄️🐉", name: lang === 'fr' ? "Dragon de glace" : "Ice dragon" };
+      case "fairy":
+        if (pet.stage === 1) return { emoji: "🧚", name: lang === 'fr' ? "Fée" : "Fairy" };
+        if (pet.stage === 2) {
+          if (pet.variant === "magician") return { emoji: "🧙‍♂️", name: lang === 'fr' ? "Magicien" : "Magician" };
+          return { emoji: "🧙‍♀️", name: lang === 'fr' ? "Sorcière" : "Witch" };
+        }
+        if (pet.variant === "magician") return { emoji: "✨🧙‍♂️", name: lang === 'fr' ? "Archimage" : "Archmage" };
+        return { emoji: "🔮🧙‍♀️", name: lang === 'fr' ? "Enchanteresse" : "Sorceress" };
+      case "kitten":
+        if (pet.stage === 1) return { emoji: "🐱", name: lang === 'fr' ? "Chaton" : "Kitten" };
+        if (pet.stage === 2) return { emoji: "🐈", name: lang === 'fr' ? "Chat" : "Cat" };
+        if (pet.variant === "lion") return { emoji: "🦁", name: lang === 'fr' ? "Lion" : "Lion" };
+        return { emoji: "🐆", name: lang === 'fr' ? "Panthère" : "Panther" };
+      default:
+        return { emoji: "❓", name: "?" };
+    }
+  }
+
+  function updateUI() {
+    if (pet.stage === 0) pet.happiness = 50;
+
+    pet.hunger = Math.min(100, Math.max(0, pet.hunger));
+    pet.happiness = Math.min(100, Math.max(0, pet.happiness));
+    pet.energy = Math.min(100, Math.max(0, pet.energy));
+    pet.cleanliness = Math.min(100, Math.max(0, pet.cleanliness));
+
+    hungerBar.value = pet.hunger;
+    happinessBar.value = pet.happiness;
+    energyBar.value = pet.energy;
+    cleanBar.value = pet.cleanliness;
+    hungerVal.innerText = Math.floor(pet.hunger);
+    happinessVal.innerText = Math.floor(pet.happiness);
+    energyVal.innerText = Math.floor(pet.energy);
+    cleanVal.innerText = Math.floor(pet.cleanliness);
+
+    const { emoji, name } = getSpeciesEmojiAndName();
+    petEmoji.innerText = emoji;
+    petArea.className = `pet-area stage-${pet.stage}`;
+    speciesNameSpan.innerText = name;
+
+    ageDisplay.innerText = pet.ageMinutes.toFixed(1);
+    let nextThreshold = pet.stage + 1 < STAGE_THRESHOLDS.length ? STAGE_THRESHOLDS[pet.stage+1] : STAGE_THRESHOLDS[pet.stage] + 1;
+    let progressValue = (pet.ageMinutes - STAGE_THRESHOLDS[pet.stage]) / (nextThreshold - STAGE_THRESHOLDS[pet.stage]);
+    progressValue = Math.min(1, Math.max(0, progressValue));
+    ageProgress.value = progressValue;
+
+    if (pet.sleeping) {
+      moodEmoji.innerText = "😴";
+    } else {
+      if (pet.stage === 0) {
+        moodEmoji.innerText = "🥚💤";
+      } else if (pet.happiness <= 20 || pet.hunger >= 90 || pet.cleanliness <= 15) {
+        moodEmoji.innerText = "😢";
+      } else if (pet.happiness >= 70 && pet.energy >= 50) {
+        moodEmoji.innerText = "😍";
+      } else {
+        moodEmoji.innerText = "😊";
+      }
+    }
+
+    if (pet.sleeping) {
+      sleepBtn.style.display = "none";
+      wakeBtn.style.display = "flex";
+      feedBtn.disabled = true;
+      playBtn.disabled = true;
+      cleanBtn.disabled = true;
+      magicBtn.disabled = true;
+    } else {
+      sleepBtn.style.display = "flex";
+      wakeBtn.style.display = "none";
+      feedBtn.disabled = false;
+      cleanBtn.disabled = false;
+      if (pet.stage >= 1) {
+        playBtn.style.display = "flex";
+        playBtn.disabled = false;
+      } else {
+        playBtn.style.display = "none";
+      }
+      if (pet.stage >= 2) {
+        magicBtn.style.display = "flex";
+        magicBtn.disabled = false;
+      } else {
+        magicBtn.style.display = "none";
+      }
+    }
+  }
+
+  function evolveToStage1() {
+    const rand = Math.floor(Math.random() * 4);
+    if (rand === 0) pet.species = "unicorn";
+    else if (rand === 1) pet.species = "dragon";
+    else if (rand === 2) pet.species = "fairy";
+    else pet.species = "kitten";
+    pet.stage = 1;
+    pet.variant = null;
+    let msgKey = "";
+    if (pet.species === "unicorn") msgKey = "evolveStage1Unicorn";
+    else if (pet.species === "dragon") msgKey = "evolveStage1Dragon";
+    else if (pet.species === "fairy") msgKey = "evolveStage1Fairy";
+    else msgKey = "evolveStage1Kitten";
+    setMessage(t(msgKey));
+    saveGame();
+  }
+
+  function evolveToStage2() {
+    if (pet.species === "unicorn") {
+      pet.stage = 2;
+      setMessage(t('evolveStage2Pony'));
+    } else if (pet.species === "dragon") {
+      pet.stage = 2;
+      setMessage(t('evolveStage2YoungDragon'));
+    } else if (pet.species === "fairy") {
+      if (pet.happiness > pet.energy) {
+        pet.variant = "magician";
+        setMessage(t('evolveStage2Magician'));
+      } else {
+        pet.variant = "witch";
+        setMessage(t('evolveStage2Witch'));
+      }
+      pet.stage = 2;
+    } else if (pet.species === "kitten") {
+      pet.stage = 2;
+      setMessage(t('evolveStage2Cat'));
+    }
+    saveGame();
+  }
+
+  function evolveToStage3() {
+    if (pet.species === "unicorn") {
+      pet.stage = 3;
+      setMessage(t('evolveStage3Unicorn'));
+    } else if (pet.species === "dragon") {
+      if (pet.happiness > pet.energy) {
+        pet.variant = "fire";
+        setMessage(t('evolveStage3FireDragon'));
+      } else {
+        pet.variant = "ice";
+        setMessage(t('evolveStage3IceDragon'));
+      }
+      pet.stage = 3;
+    } else if (pet.species === "fairy") {
+      pet.stage = 3;
+      if (pet.variant === "magician") {
+        setMessage(t('evolveStage3Archmage'));
+      } else {
+        setMessage(t('evolveStage3Sorceress'));
+      }
+    } else if (pet.species === "kitten") {
+      if (pet.cleanliness > 70) {
+        pet.variant = "lion";
+        setMessage(t('evolveStage3Lion'));
+      } else {
+        pet.variant = "panther";
+        setMessage(t('evolveStage3Panther'));
+      }
+      pet.stage = 3;
+    }
+    saveGame();
+  }
+
+  function checkEvolution() {
+    let targetStage = pet.stage;
+    while (targetStage + 1 < STAGE_THRESHOLDS.length && pet.ageMinutes >= STAGE_THRESHOLDS[targetStage + 1]) {
+      targetStage++;
+    }
+    if (targetStage !== pet.stage) {
+      if (targetStage === 1 && pet.stage === 0) evolveToStage1();
+      if (targetStage === 2 && pet.stage === 1) evolveToStage2();
+      if (targetStage === 3 && pet.stage === 2) evolveToStage3();
+      updateUI();
+    }
+  }
+
+  function addAge(minutes) {
+    pet.ageMinutes += minutes;
+    checkEvolution();
+  }
+
+  function isSad() {
+    if (pet.sleeping) return false;
+    return (pet.happiness <= 20 || pet.hunger >= 90 || pet.cleanliness <= 15);
+  }
+
+  function decayStats() {
+    if (pet.sleeping) {
+      pet.energy = Math.min(100, pet.energy + 4);
+      pet.hunger = Math.min(100, pet.hunger + 0.5);
+      if (pet.stage !== 0) pet.happiness = Math.max(0, pet.happiness - 0.3);
+      pet.cleanliness = Math.max(0, pet.cleanliness - 0.5);
+      if (pet.energy >= 100 && Math.random() < 0.2) {
+        pet.sleeping = false;
+        setMessage(t('wakeUpAuto'));
+      }
+    } else {
+      pet.hunger = Math.min(100, pet.hunger + 1.5);
+      if (pet.stage !== 0) {
+        pet.happiness = Math.max(0, pet.happiness - 1.2);
+      } else {
+        pet.happiness = 50;
+      }
+      pet.energy = Math.max(0, pet.energy - 1.2);
+      pet.cleanliness = Math.max(0, pet.cleanliness - 1.0);
+    }
+
+    let ageIncrease = 0;
+    if (!pet.sleeping && !isSad()) {
+      ageIncrease = 0.1;
+      if (pet.happiness > 80 && pet.energy > 70) {
+        ageIncrease += 0.05;
+      }
+    } else if (!pet.sleeping && isSad()) {
+      setMessage(t('sadGrowthStopped'));
+    }
+
+    if (ageIncrease > 0) {
+      addAge(ageIncrease);
+    }
+
+    updateUI();
+    if (!pet.sleeping && isSad()) {
+      setMessage(t('sadMessage'));
+    }
+    saveGame();
+  }
+
+  function triggerRandomEvent() {
+    if (pet.sleeping) return;
+    const events = [
+      { key: "rainbow", effect: () => { if (pet.stage !== 0) pet.happiness = Math.min(100, pet.happiness + 6); } },
+      { key: "candy", effect: () => pet.hunger = Math.max(0, pet.hunger - 6) },
+      { key: "sparkle", effect: () => pet.cleanliness = Math.min(100, pet.cleanliness + 8) },
+      { key: "butterfly", effect: () => pet.energy = Math.min(100, pet.energy + 8) },
+      { key: "fairySong", effect: () => { if (pet.stage !== 0) pet.happiness = Math.min(100, pet.happiness+5); pet.energy = Math.min(100, pet.energy+3); } },
+      { key: "wind", effect: () => pet.cleanliness = Math.max(0, pet.cleanliness - 4) },
+      { key: "starShower", effect: () => { 
+          pet.hunger = Math.max(0, pet.hunger-2);
+          if (pet.stage !== 0) pet.happiness = Math.min(100, pet.happiness+2);
+          pet.energy = Math.min(100, pet.energy+2);
+          pet.cleanliness = Math.min(100, pet.cleanliness+2);
+      }}
+    ];
+    const idx = Math.floor(Math.random() * events.length);
+    const ev = events[idx];
+    ev.effect();
+    updateUI();
+    setMessage(`✨ ${t(ev.key)} ✨`);
+    saveGame();
+  }
+
+  function scheduleRandomEvent() {
+    if (eventTimeout) clearTimeout(eventTimeout);
+    const delay = 10000 + Math.random() * 20000;
+    eventTimeout = setTimeout(() => {
+      triggerRandomEvent();
+      scheduleRandomEvent();
+    }, delay);
+  }
+
+  function feed() {
+    if (pet.sleeping) { setMessage(t('cantFeedSleep'), true); return; }
+    const reduction = Math.min(10, pet.hunger);
+    pet.hunger = Math.max(0, pet.hunger - reduction);
+    if (pet.stage !== 0) pet.happiness = Math.min(100, pet.happiness + 3);
+    updateUI();
+    setMessage(t('feed', reduction));
+    saveGame();
+  }
+
+  function play() {
+    if (pet.sleeping) { setMessage(t('cantPlaySleep'), true); return; }
+    if (pet.stage === 0) { setMessage(t('eggCantPlay'), true); return; }
+    if (pet.energy < 8) {
+      setMessage(t('too Tired'), true);
+      return;
+    }
+    const happinessGain = Math.min(10, 100 - pet.happiness);
+    const energyCost = Math.min(10, pet.energy);
+    pet.happiness = Math.min(100, pet.happiness + happinessGain);
+    pet.energy = Math.max(0, pet.energy - energyCost);
+    pet.hunger = Math.min(100, pet.hunger + 2);
+    updateUI();
+    setMessage(t('play', happinessGain, energyCost));
+    saveGame();
+  }
+
+  function cleanPet() {
+    if (pet.sleeping) { setMessage(t('cantCleanSleep'), true); return; }
+    const cleanlinessGain = Math.min(10, 100 - pet.cleanliness);
+    pet.cleanliness = Math.min(100, pet.cleanliness + cleanlinessGain);
+    if (pet.stage !== 0) pet.happiness = Math.min(100, pet.happiness + 2);
+    updateUI();
+    setMessage(t('clean', cleanlinessGain));
+    saveGame();
+  }
+
+  function sleep() {
+    if (pet.sleeping) return;
+    if (pet.energy >= 95) {
+      setMessage(t('fullEnergy'), true);
+      return;
+    }
+    pet.sleeping = true;
+    updateUI();
+    setMessage(t('sleep'));
+    saveGame();
+  }
+
+  function wakeUp() {
+    if (!pet.sleeping) return;
+    pet.sleeping = false;
+    updateUI();
+    setMessage(t('wake'));
+    saveGame();
+  }
+
+  function magic() {
+    if (pet.sleeping) { setMessage(t('magicSleep'), true); return; }
+    if (pet.stage < 2) return;
+    const stats = [
+      { name: lang === 'fr' ? "Faim" : "Hunger", ref: () => pet.hunger, set: (v) => pet.hunger = v },
+      { name: lang === 'fr' ? "Bonheur" : "Happiness", ref: () => pet.happiness, set: (v) => pet.happiness = v },
+      { name: lang === 'fr' ? "Énergie" : "Energy", ref: () => pet.energy, set: (v) => pet.energy = v },
+      { name: lang === 'fr' ? "Propreté" : "Cleanliness", ref: () => pet.cleanliness, set: (v) => pet.cleanliness = v }
+    ];
+    const numStats = Math.floor(Math.random() * 4) + 1;
+    const shuffled = [...stats];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const affected = shuffled.slice(0, numStats);
+    let changes = "";
+    for (let stat of affected) {
+      let delta = Math.floor(Math.random() * 21) - 10;
+      let newVal = stat.ref() + delta;
+      newVal = Math.min(100, Math.max(0, newVal));
+      stat.set(newVal);
+      const sign = delta >= 0 ? `+${delta}` : `${delta}`;
+      changes += `${stat.name} ${sign} `;
+    }
+    updateUI();
+    setMessage(t('magic', changes));
+    saveGame();
+  }
+
+  function resetGame() {
+    if (confirm(lang === 'fr' ? "Recommencer ? Toute progression sera perdue." : "Reset? All progress will be lost.")) {
+      pet = {
+        hunger: 80,
+        happiness: 80,
+        energy: 80,
+        cleanliness: 80,
+        sleeping: false,
+        muted: pet.muted,
+        ageMinutes: 0,
+        stage: 0,
+        species: null,
+        variant: null
+      };
+      updateUI();
+      setMessage(t('newEgg'));
+      saveGame();
+    }
+  }
+
+  function toggleMute() {
+    pet.muted = !pet.muted;
+    muteBtn.innerHTML = pet.muted ? translations.ui[lang].unmute : translations.ui[lang].mute;
+    setMessage(pet.muted ? t('muteOn') : t('muteOff'));
+    saveGame();
+  }
+
+  function setMessage(msg, isError = false) {
+    if (!pet.muted || !isError) {
+      messageBox.innerHTML = msg;
+      setTimeout(() => {
+        if (messageBox.innerHTML === msg) {
+          messageBox.innerHTML = lang === 'fr' ? "🌸 Qu'aimerais-tu faire maintenant ? 🌸" : "🌸 What would you like to do now? 🌸";
+        }
+      }, 4000);
+    }
+  }
+
+  function saveGame() {
+    const saveData = {
+      hunger: pet.hunger,
+      happiness: pet.happiness,
+      energy: pet.energy,
+      cleanliness: pet.cleanliness,
+      sleeping: pet.sleeping,
+      muted: pet.muted,
+      ageMinutes: pet.ageMinutes,
+      stage: pet.stage,
+      species: pet.species,
+      variant: pet.variant,
+      version: 7
+    };
+    localStorage.setItem('magicPet', JSON.stringify(saveData));
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem('magicPet');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        pet.hunger = data.hunger ?? 80;
+        pet.happiness = data.happiness ?? 80;
+        pet.energy = data.energy ?? 80;
+        pet.cleanliness = data.cleanliness ?? 80;
+        pet.sleeping = data.sleeping ?? false;
+        pet.muted = data.muted ?? false;
+        pet.ageMinutes = data.ageMinutes ?? 0;
+        pet.stage = data.stage ?? 0;
+        pet.species = data.species ?? null;
+        pet.variant = data.variant ?? null;
+        checkEvolution();
+        updateUI();
+        muteBtn.innerHTML = pet.muted ? translations.ui[lang].unmute : translations.ui[lang].mute;
+        setMessage(t('welcomeBack'));
+      } catch(e) { console.warn("Load failed"); }
+    } else {
+      setMessage(t('eggStart'));
+    }
+  }
+
+  function startGameLoop() {
+    if (gameInterval) clearInterval(gameInterval);
+    gameInterval = setInterval(() => decayStats(), 1000);
+    scheduleRandomEvent();
+  }
+
+  function bindEvents() {
+    feedBtn.addEventListener('click', feed);
+    playBtn.addEventListener('click', play);
+    cleanBtn.addEventListener('click', cleanPet);
+    sleepBtn.addEventListener('click', sleep);
+    wakeBtn.addEventListener('click', wakeUp);
+    resetBtn.addEventListener('click', resetGame);
+    muteBtn.addEventListener('click', toggleMute);
+    magicBtn.addEventListener('click', magic);
+    langToggleBtn.addEventListener('click', toggleLanguage);
+  }
+
+  function init() {
+    bindEvents();
+    loadGame();
+    startGameLoop();
+    updateUITexts(); // initial UI texts in chosen language
+  }
+
+  init();
+</script>
+</body>
+</html>
