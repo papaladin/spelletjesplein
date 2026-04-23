@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>⏰ Klokkijken – sleep beide wijzers</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f9e7b3 0%, #f5d98f 100%);
+            font-family: 'Segoe UI', 'Comic Neue', 'Fredoka One', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 700px;
+            width: 100%;
+            background: #fffef7;
+            border-radius: 70px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 12px #ffcd00, 0 0 0 16px #2c2b26;
+            padding: 25px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: #ffcd00;
+            display: inline-block;
+            padding: 8px 30px;
+            border-radius: 60px;
+            color: #2d2b20;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 0 #b47c00;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .mode-btn {
+            background: #3f6792;
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            box-shadow: 0 4px 0 #1f3b55;
+        }
+
+        .mode-btn.active {
+            background: #ffb347;
+            color: #2c2b26;
+            box-shadow: 0 0 0 2px #ffcd00, 0 4px 0 #8b6200;
+        }
+
+        canvas {
+            background: #fef3e0;
+            border-radius: 50%;
+            box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            margin: 15px auto;
+            display: block;
+            touch-action: none;
+        }
+
+        .info-panel {
+            background: #fef3cf;
+            border-radius: 50px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .target-time {
+            font-size: 2rem;
+            font-weight: bold;
+            background: white;
+            display: inline-block;
+            padding: 8px 25px;
+            border-radius: 50px;
+            margin: 10px 0;
+        }
+
+        .dutch-time {
+            font-size: 1.3rem;
+            color: #5a3e0b;
+            margin: 5px 0;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #timeInput {
+            font-size: 1.8rem;
+            width: 140px;
+            text-align: center;
+            border: 2px solid #ffcd00;
+            border-radius: 48px;
+            padding: 8px;
+            font-family: monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        button {
+            background: #2c3e2f;
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 0 #141d11;
+            transition: 0.05s linear;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #141d11;
+        }
+
+        .check-btn {
+            background: #2c7a2d;
+            font-size: 1.2rem;
+        }
+
+        .new-btn {
+            background: #3f6792;
+        }
+
+        .feedback {
+            font-size: 1.3rem;
+            margin: 15px;
+            padding: 10px;
+            border-radius: 40px;
+            background: white;
+        }
+
+        .score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: #2c2b26;
+            color: white;
+            display: inline-block;
+            padding: 5px 20px;
+            border-radius: 40px;
+        }
+
+        @media (max-width: 550px) {
+            .target-time { font-size: 1.5rem; }
+            #timeInput { font-size: 1.3rem; width: 110px; }
+            button { padding: 6px 12px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>⏰ Klokkijken – sleep de wijzers ⏰</h1>
+
+    <div class="mode-buttons">
+        <button id="modeReadBtn" class="mode-btn active">📖 Lees de klok</button>
+        <button id="modeSetBtn" class="mode-btn">✍️ Zet de klok (sleep)</button>
+    </div>
+
+    <canvas id="clockCanvas" width="300" height="300" style="width:100%; max-width:300px; height:auto;"></canvas>
+
+    <div class="info-panel" id="infoPanel"></div>
+
+    <div class="feedback" id="feedbackMsg"></div>
+    <div class="score" id="scoreDisplay">Score: 0</div>
+    <button id="newQuestionBtn" class="new-btn">🔄 Nieuwe vraag</button>
+</div>
+
+<script>
+    // Canvas en tekeninstellingen
+    const canvas = document.getElementById("clockCanvas");
+    const ctx = canvas.getContext("2d");
+    const centerX = 150, centerY = 150;
+    const radius = 140;
+
+    // Teken klok op basis van uren (0-11) en minuten (0-59)
+    function drawClock(hour24, minute) {
+        ctx.clearRect(0, 0, 300, 300);
+        // Witte schijf
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = "#fef3e0";
+        ctx.fill();
+        ctx.strokeStyle = "#2c2b26";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        // Uurmarkeringen
+        for (let i = 1; i <= 12; i++) {
+            let angle = i * 30 * Math.PI / 180;
+            let x1 = centerX + (radius - 15) * Math.sin(angle);
+            let y1 = centerY - (radius - 15) * Math.cos(angle);
+            let x2 = centerX + (radius - 5) * Math.sin(angle);
+            let y2 = centerY - (radius - 5) * Math.cos(angle);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        // Bereken continue uurhoek (uren + minuten/60)
+        let hour12 = hour24 % 12;
+        let hourAngle = (hour12 + minute / 60) * 30 * Math.PI / 180;
+        let hourX = centerX + 70 * Math.sin(hourAngle);
+        let hourY = centerY - 70 * Math.cos(hourAngle);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(hourX, hourY);
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        // Minuutwijzer
+        let minuteAngle = minute * 6 * Math.PI / 180;
+        let minuteX = centerX + 100 * Math.sin(minuteAngle);
+        let minuteY = centerY - 100 * Math.cos(minuteAngle);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(minuteX, minuteY);
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        // Midden stip
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "#2c2b26";
+        ctx.fill();
+    }
+
+    // Hulp: bereken hoek (graden vanaf 12 uur met de klok mee) van muispositie
+    function getAngleFromMouse(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clientX, clientY;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        let canvasX = (clientX - rect.left) * scaleX;
+        let canvasY = (clientY - rect.top) * scaleY;
+        let dx = canvasX - centerX;
+        let dy = canvasY - centerY;
+        let angleRad = Math.atan2(dy, dx);
+        let angleDeg = (angleRad * 180 / Math.PI + 90) % 360;
+        if (angleDeg < 0) angleDeg += 360;
+        return angleDeg;
+    }
+
+    // Bepaal welke wijzer wordt gesleept (minuut of uur) op basis van afstand tot tip
+    let activeHand = null; // "minute" of "hour"
+
+    function getHandFromAngle(angleDeg, currentHour, currentMinute) {
+        // Bereken ideale hoek voor minuutwijzer (in graden)
+        let minuteAngleIdeal = currentMinute * 6;
+        // Bereken ideale hoek voor uurwijzer (continue)
+        let hour12 = currentHour % 12;
+        let hourAngleIdeal = (hour12 + currentMinute / 60) * 30;
+        // Verschil in hoek (kleinste afstand)
+        let diffMinute = Math.abs(angleDeg - minuteAngleIdeal);
+        diffMinute = Math.min(diffMinute, 360 - diffMinute);
+        let diffHour = Math.abs(angleDeg - hourAngleIdeal);
+        diffHour = Math.min(diffHour, 360 - diffHour);
+        // Als de muis dichter bij de minuutwijzer is (binnen 15 graden), pak de minuutwijzer
+        if (diffMinute < 20 && diffMinute <= diffHour) return "minute";
+        if (diffHour < 20) return "hour";
+        return null; // te ver weg, geen hand
+    }
+
+    // Sleep de minuutwijzer (snap naar 5-minuten stappen)
+    function setMinuteFromAngle(angleDeg, currentHour, currentMinute) {
+        let newMinute = Math.round(angleDeg / 6);
+        if (newMinute >= 60) newMinute = 0;
+        // Rond af naar 5 minuten?
+        newMinute = Math.round(newMinute / 5) * 5;
+        if (newMinute === 60) newMinute = 0;
+        let deltaM = newMinute - currentMinute;
+        let newHour = currentHour;
+        if (deltaM < -30) newHour++;
+        else if (deltaM > 30) newHour--;
+        if (newHour >= 12) newHour -= 12;
+        if (newHour < 0) newHour += 12;
+        return { hour: newHour, minute: newMinute };
+    }
+
+    // Sleep de uurwijzer (snap naar hele uren)
+    function setHourFromAngle(angleDeg, currentMinute) {
+        let newHour = Math.round(angleDeg / 30) % 12;
+        if (newHour === 0) newHour = 12;
+        return newHour;
+    }
+
+    // ----- Spelvariabelen -----
+    let currentMode = "read";
+    let currentHour = 3, currentMinute = 0;
+    let targetHour = 3, targetMinute = 0;
+    let score = 0;
+    let answered = false;
+    let dragging = false;
+
+    const modeReadBtn = document.getElementById("modeReadBtn");
+    const modeSetBtn = document.getElementById("modeSetBtn");
+    const infoPanel = document.getElementById("infoPanel");
+    const feedbackDiv = document.getElementById("feedbackMsg");
+    const scoreSpan = document.getElementById("scoreDisplay");
+    const newQuestionBtn = document.getElementById("newQuestionBtn");
+
+    // ----- Helper: random tijd (kwartieren) -----
+    function randomTime() {
+        let hour = Math.floor(Math.random() * 12) + 1;
+        let minuteChoices = [0, 15, 30, 45];
+        let minute = minuteChoices[Math.floor(Math.random() * minuteChoices.length)];
+        return { hour, minute };
+    }
+
+    function formatDigital(hour, minute) {
+        let hh = hour < 10 ? "0" + hour : "" + hour;
+        let mm = minute < 10 ? "0" + minute : "" + minute;
+        return `${hh}:${mm}`;
+    }
+
+    function toDutchTime(hour, minute) {
+        let nextHour = (hour % 12) + 1;
+        let hour12 = hour % 12;
+        if (hour12 === 0) hour12 = 12;
+        if (minute === 0) return `${hour12} uur`;
+        if (minute === 15) return `kwart over ${hour12}`;
+        if (minute === 30) return `half ${nextHour}`;
+        if (minute === 45) return `kwart voor ${nextHour}`;
+        return `${hour12}:${minute < 10 ? '0'+minute : minute}`;
+    }
+
+    // ----- UI updaten per modus -----
+    function updateUIForMode() {
+        if (currentMode === "read") {
+            drawClock(currentHour, currentMinute);
+            infoPanel.innerHTML = `
+                <div class="input-area">
+                    <input type="text" id="timeInput" placeholder="uu:mm" autocomplete="off">
+                    <button id="checkReadBtn" class="check-btn">✅ Controleer</button>
+                </div>
+                <div class="dutch-time">Typ de tijd (bijv. 3:15 of 3,15)</div>
+            `;
+            document.getElementById("checkReadBtn").onclick = checkReadAnswer;
+            const inp = document.getElementById("timeInput");
+            if (inp) inp.onkeypress = (e) => { if (e.key === "Enter") checkReadAnswer(); };
+        } else {
+            // set-modus
+            const digital = formatDigital(targetHour, targetMinute);
+            const dutch = toDutchTime(targetHour, targetMinute);
+            infoPanel.innerHTML = `
+                <div class="target-time">🎯 Doel: ${digital}</div>
+                <div class="dutch-time">${dutch}</div>
+                <div class="button-group">
+                    <button id="incHourBtn">+1 uur</button>
+                    <button id="decHourBtn">-1 uur</button>
+                    <button id="incMinBtn">+5 min</button>
+                    <button id="decMinBtn">-5 min</button>
+                </div>
+                <div class="button-group">
+                    <button id="checkSetBtn" class="check-btn">✅ Controleer</button>
+                </div>
+                <div class="dutch-time">💡 Tip: sleep de wijzers naar de juiste tijd!</div>
+            `;
+            drawClock(currentHour, currentMinute);
+            document.getElementById("incHourBtn").onclick = () => adjustClock(1, 0);
+            document.getElementById("decHourBtn").onclick = () => adjustClock(-1, 0);
+            document.getElementById("incMinBtn").onclick = () => adjustClock(0, 5);
+            document.getElementById("decMinBtn").onclick = () => adjustClock(0, -5);
+            document.getElementById("checkSetBtn").onclick = checkSetAnswer;
+        }
+    }
+
+    function adjustClock(dHour, dMinute) {
+        if (answered) return;
+        let newHour = currentHour + dHour;
+        let newMinute = currentMinute + dMinute;
+        if (newMinute >= 60) {
+            newMinute -= 60;
+            newHour++;
+        }
+        if (newMinute < 0) {
+            newMinute += 60;
+            newHour--;
+        }
+        if (newHour >= 12) newHour -= 12;
+        if (newHour < 0) newHour += 12;
+        currentHour = newHour;
+        currentMinute = newMinute;
+        drawClock(currentHour, currentMinute);
+        feedbackDiv.innerHTML = "⏰ Gebruik de knoppen of sleep de wijzers.";
+        feedbackDiv.style.background = "white";
+    }
+
+    function checkReadAnswer() {
+        if (answered) {
+            feedbackDiv.innerHTML = "Deze vraag is al beantwoord! Klik op 'Nieuwe vraag'.";
+            return;
+        }
+        const inp = document.getElementById("timeInput");
+        let raw = inp.value.trim();
+        if (raw === "") { feedbackDiv.innerHTML = "Typ eerst een tijd."; return; }
+        let cleaned = raw.replace(',', ':');
+        let parts = cleaned.split(":");
+        if (parts.length !== 2) { feedbackDiv.innerHTML = "Gebruik uu:mm, bijv. 3:45."; return; }
+        let hour = parseInt(parts[0], 10);
+        let minute = parseInt(parts[1], 10);
+        if (isNaN(hour) || isNaN(minute) || minute >= 60 || hour > 23) {
+            feedbackDiv.innerHTML = "Ongeldige tijd.";
+            return;
+        }
+        let displayHour = currentHour % 12;
+        if (displayHour === 0) displayHour = 12;
+        let userHour12 = hour % 12;
+        if (userHour12 === 0) userHour12 = 12;
+        if (userHour12 === displayHour && minute === currentMinute) {
+            score++;
+            scoreSpan.innerText = `Score: ${score}`;
+            feedbackDiv.innerHTML = "✅ Helemaal juist! Goed gedaan! ✅";
+            feedbackDiv.style.background = "#b5e3b5";
+            answered = true;
+        } else {
+            feedbackDiv.innerHTML = `❌ Fout! De klok toont ${displayHour}:${currentMinute < 10 ? '0'+currentMinute : currentMinute}. Probeer opnieuw. ❌`;
+            feedbackDiv.style.background = "#ffe0cc";
+        }
+    }
+
+    function checkSetAnswer() {
+        if (answered) {
+            feedbackDiv.innerHTML = "Deze vraag is al klaar! Klik 'Nieuwe vraag'.";
+            return;
+        }
+        if (currentHour === targetHour && currentMinute === targetMinute) {
+            score++;
+            scoreSpan.innerText = `Score: ${score}`;
+            feedbackDiv.innerHTML = "✅ Perfect! De wijzers staan goed! ✅";
+            feedbackDiv.style.background = "#b5e3b5";
+            answered = true;
+        } else {
+            feedbackDiv.innerHTML = `❌ Nog niet goed. De wijzers staan op ${currentHour}:${currentMinute < 10 ? '0'+currentMinute : currentMinute}. Blijf oefenen! ❌`;
+            feedbackDiv.style.background = "#ffe0cc";
+        }
+    }
+
+    function newQuestion() {
+        answered = false;
+        if (currentMode === "read") {
+            const newTime = randomTime();
+            currentHour = newTime.hour;
+            currentMinute = newTime.minute;
+            drawClock(currentHour, currentMinute);
+            const inp = document.getElementById("timeInput");
+            if (inp) inp.value = "";
+            feedbackDiv.innerHTML = "📖 Welke tijd zie je? Typ het antwoord.";
+            feedbackDiv.style.background = "white";
+        } else {
+            const newTarget = randomTime();
+            targetHour = newTarget.hour;
+            targetMinute = newTarget.minute;
+            currentHour = Math.floor(Math.random() * 12);
+            currentMinute = Math.floor(Math.random() * 4) * 15;
+            drawClock(currentHour, currentMinute);
+            updateUIForMode();
+            feedbackDiv.innerHTML = "⏰ Zet de wijzers (sleep of knoppen) naar de juiste tijd en klik 'Controleer'.";
+            feedbackDiv.style.background = "white";
+        }
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        answered = false;
+        score = 0;
+        scoreSpan.innerText = "Score: 0";
+        if (mode === "read") {
+            modeReadBtn.classList.add("active");
+            modeSetBtn.classList.remove("active");
+            const newTime = randomTime();
+            currentHour = newTime.hour;
+            currentMinute = newTime.minute;
+            drawClock(currentHour, currentMinute);
+        } else {
+            modeSetBtn.classList.add("active");
+            modeReadBtn.classList.remove("active");
+            const newTarget = randomTime();
+            targetHour = newTarget.hour;
+            targetMinute = newTarget.minute;
+            currentHour = Math.floor(Math.random() * 12);
+            currentMinute = Math.floor(Math.random() * 4) * 15;
+            drawClock(currentHour, currentMinute);
+        }
+        updateUIForMode();
+        feedbackDiv.innerHTML = mode === "read" ? "Lees de klok en typ de tijd." : "Sleep de wijzers of gebruik de knoppen om de klok precies te zetten.";
+        feedbackDiv.style.background = "white";
+    }
+
+    // ----- SLEEP LOGICA (beide wijzers apart) -----
+    function onDragStart(e) {
+        if (currentMode !== "set") return;
+        e.preventDefault();
+        let angle = getAngleFromMouse(e);
+        activeHand = getHandFromAngle(angle, currentHour, currentMinute);
+        if (activeHand) dragging = true;
+    }
+
+    function onDragMove(e) {
+        if (!dragging || currentMode !== "set") return;
+        e.preventDefault();
+        let angle = getAngleFromMouse(e);
+        if (activeHand === "minute") {
+            let newTime = setMinuteFromAngle(angle, currentHour, currentMinute);
+            currentHour = newTime.hour;
+            currentMinute = newTime.minute;
+            drawClock(currentHour, currentMinute);
+        } else if (activeHand === "hour") {
+            let newHour = setHourFromAngle(angle, currentMinute);
+            currentHour = newHour;
+            drawClock(currentHour, currentMinute);
+        }
+        // wis feedback tijdelijk
+        if (!answered) {
+            feedbackDiv.innerHTML = "⏰ Sleep verder of klik 'Controleer'.";
+            feedbackDiv.style.background = "white";
+        }
+    }
+
+    function onDragEnd(e) {
+        dragging = false;
+        activeHand = null;
+    }
+
+    canvas.addEventListener("mousedown", onDragStart);
+    window.addEventListener("mousemove", onDragMove);
+    window.addEventListener("mouseup", onDragEnd);
+    canvas.addEventListener("touchstart", onDragStart, { passive: false });
+    window.addEventListener("touchmove", onDragMove, { passive: false });
+    window.addEventListener("touchend", onDragEnd);
+
+    modeReadBtn.addEventListener("click", () => setMode("read"));
+    modeSetBtn.addEventListener("click", () => setMode("set"));
+    newQuestionBtn.addEventListener("click", newQuestion);
+
+    setMode("read");
+</script>
+</body>
+</html>
