@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
@@ -304,16 +304,31 @@
 </div>
 
 <script>
-    // ---------- IMAGE URLS (correcte pad) ----------
-    const IMAGE_BASE = "https://www.computermeester.be/images/euros/";
+    // ---------- EXPLICIT IMAGE URL LOOKUP TABLE ----------
+    const IMAGE_URLS = {
+        // Centen (coins)
+        0.01: "https://www.computermeester.be/images/euros/1c.png",
+        0.02: "https://www.computermeester.be/images/euros/2c.png",
+        0.05: "https://www.computermeester.be/images/euros/5c.png",
+        0.10: "https://www.computermeester.be/images/euros/10c.png",
+        0.20: "https://www.computermeester.be/images/euros/20c.png",
+        0.50: "https://www.computermeester.be/images/euros/50c.png",
+        // Euro munten
+        1: "https://www.computermeester.be/images/euros/1.png",
+        2: "https://www.computermeester.be/images/euros/2.png",
+        // Bankbiljetten
+        5: "https://www.computermeester.be/images/euros/5.png",
+        10: "https://www.computermeester.be/images/euros/10.png",
+        20: "https://www.computermeester.be/images/euros/20.png",
+        50: "https://www.computermeester.be/images/euros/50.png",
+        100: "https://www.computermeester.be/images/euros/100.png",
+        200: "https://www.computermeester.be/images/euros/200.png",
+        500: "https://www.computermeester.be/images/euros/500.png"
+    };
 
     function getImageUrl(value) {
-        if (value < 1) {
-            let cents = Math.round(value * 100);
-            return `${IMAGE_BASE}${cents}c.png`;
-        } else {
-            return `${IMAGE_BASE}${value}.png`;
-        }
+        // value is a number like 0.01, 0.20, 1, 5, 10, etc.
+        return IMAGE_URLS[value];
     }
 
     // Beschikbare biljetten en munten (alleen hele euro's en centen)
@@ -391,7 +406,6 @@
         const maxAttempts = 200;
         
         while (items.length < targetItemCount && attempts < maxAttempts) {
-            // Kies een willekeurig item uit alleItems
             let candidate = allItems[Math.floor(Math.random() * allItems.length)];
             let newTotal = totalCents + candidate.valueCents;
             if (newTotal <= currentMax) {
@@ -399,20 +413,17 @@
                 totalCents = newTotal;
             }
             attempts++;
-            // Als we vastlopen en nog geen 4 items hebben, voegen we het kleinste item toe
             if (attempts > 100 && items.length < 4) {
                 let smallest = allItems.reduce((a, b) => (a.valueCents < b.valueCents ? a : b));
                 if (totalCents + smallest.valueCents <= currentMax) {
                     items.push({ ...smallest });
                     totalCents += smallest.valueCents;
                 } else {
-                    // kan niet, stop
                     break;
                 }
             }
         }
         
-        // Zorg dat er minimaal 4 items zijn (indien mogelijk)
         while (items.length < 4 && totalCents < currentMax) {
             let smallest = allItems.reduce((a, b) => (a.valueCents < b.valueCents ? a : b));
             if (totalCents + smallest.valueCents <= currentMax) {
@@ -423,13 +434,13 @@
             }
         }
         
-        // Sorteer items van groot naar klein (voor de display)
+        // Sorteer van groot naar klein
         items.sort((a, b) => b.valueCents - a.valueCents);
         
         return items;
     }
 
-    // Render alleen afbeeldingen, geen tekst onder de afbeelding
+    // Render alleen afbeeldingen (geen tekst eronder)
     function renderPuzzle() {
         moneyDisplayDiv.innerHTML = '';
         for (let item of currentPuzzleItems) {
@@ -444,7 +455,7 @@
             img.style.height = 'auto';
             img.style.borderRadius = '12px';
 
-            // Fallback SVG als afbeelding niet bestaat (maar zou moeten werken met echte URLs)
+            // Fallback SVG (only if the image somehow fails to load)
             img.onerror = () => {
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svg.setAttribute("width", "110");
@@ -501,19 +512,16 @@
         }
     }
 
-    // Increment / decrement functies
     function addToAmount(deltaEuro) {
         let current = parseAmount(amountInput.value);
         if (isNaN(current)) current = 0;
         let newVal = current + deltaEuro;
         if (newVal < 0) newVal = 0;
-        // Maximaal iets boven de maximale puzzelwaarde (niet hoger dan 2x max)
         let maxAllowed = (currentMax / 100) * 1.2;
         if (newVal > maxAllowed) newVal = maxAllowed;
         amountInput.value = newVal.toFixed(2).replace('.', ',');
     }
 
-    // Start spel
     function startGame() {
         setupScreen.style.display = 'none';
         gameScreen.style.display = 'block';
