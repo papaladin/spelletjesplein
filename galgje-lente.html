@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🌸 Galgje – Lente woorden (voor kinderen) 🌸</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0f5e8 0%, #c8e6d9 100%);
+            font-family: 'Segoe UI', 'Comic Neue', 'Fredoka One', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1100px;
+            width: 100%;
+            background: #fffef7;
+            border-radius: 64px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 12px #80c342, 0 0 0 16px #2c2b26;
+            padding: 20px 25px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: #ffd966;
+            display: inline-block;
+            padding: 8px 30px;
+            border-radius: 60px;
+            color: #2d5720;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 0 #b47c00;
+        }
+
+        .gallows-area {
+            background: #f1e7cf;
+            border-radius: 50px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            background: #fef3e0;
+            border-radius: 30px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 350px;
+            height: auto;
+        }
+
+        .word-area {
+            font-size: 2.8rem;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 12px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 60px;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 5px #0001, 0 8px 12px rgba(0,0,0,0.05);
+            word-break: break-all;
+        }
+
+        .message {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: #ffefbf;
+            border-radius: 40px;
+            padding: 10px;
+            margin: 15px 0;
+        }
+
+        .keyboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .key-btn {
+            background: #f5b042;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 55px;
+            height: 55px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8b5a2b;
+            transition: 0.05s linear;
+            font-family: monospace;
+        }
+
+        .key-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #8b5a2b;
+        }
+
+        .key-btn.disabled, .key-btn:disabled {
+            background: #aaa;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .reset-btn {
+            background: #3f6792;
+            font-size: 1.4rem;
+            padding: 12px 30px;
+            margin-top: 10px;
+            box-shadow: 0 5px 0 #1f3b55;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #5a5a4a;
+        }
+
+        @media (max-width: 650px) {
+            .word-area { font-size: 1.8rem; letter-spacing: 8px; }
+            .key-btn { width: 45px; height: 45px; font-size: 1.2rem; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>🌸 Galgje – Lente woorden 🌸</h1>
+
+    <div class="gallows-area">
+        <canvas id="hangmanCanvas" width="300" height="250" style="width:100%; max-width:300px; height:auto;"></canvas>
+    </div>
+
+    <div class="word-area" id="wordDisplay"></div>
+    <div class="message" id="messageArea">Klik op een letter om te raden!</div>
+
+    <div class="keyboard" id="keyboard"></div>
+    <button id="resetGameBtn" class="reset-btn">🔄 Nieuw woord 🔄</button>
+    <div class="footer">🌷 Raad het lente‑woord voordat het poppetje helemaal getekend is!</div>
+</div>
+
+<script>
+    // ---------- 🌱 LENTE WOORDENLIJST (korte woorden, 8-jarigen) ----------
+    const wordsList = [
+        "lente", "zon", "ei", "nest", "bloem", "vogel", "vlinder", "bij", "regen",
+        "warm", "gras", "groen", "kikker", "mei", "april", "tulp", "krokus", "rups",
+        "blad", "boom", "vrolijk", "fris", "wandeling", "lammetje", "kuiken", "vlucht"
+    ];
+
+    // ----- spelvariabelen -----
+    let secretWord = "";
+    let guessedLetters = [];
+    let wrongGuesses = 0;
+    let gameActive = true;
+    
+    // DOM elementen
+    const canvas = document.getElementById("hangmanCanvas");
+    const ctx = canvas.getContext("2d");
+    const wordDisplayDiv = document.getElementById("wordDisplay");
+    const messageDiv = document.getElementById("messageArea");
+    const keyboardDiv = document.getElementById("keyboard");
+    const resetBtn = document.getElementById("resetGameBtn");
+
+    // ----- Teken alles opnieuw op basis van wrongGuesses -----
+    function redrawAll() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (wrongGuesses >= 1) drawGallows();
+        if (wrongGuesses >= 2) drawRope();
+        if (wrongGuesses >= 3) drawHead();
+        if (wrongGuesses >= 4) drawLeftEye();
+        if (wrongGuesses >= 5) drawRightEye();
+        if (wrongGuesses >= 6) drawNose();
+        if (wrongGuesses >= 7) drawMouth();
+        if (wrongGuesses >= 8) drawBody();
+        if (wrongGuesses >= 9) drawLeftArm();
+        if (wrongGuesses >= 10) drawRightArm();
+        if (wrongGuesses >= 11) drawLeftLeg();
+        if (wrongGuesses >= 12) drawRightLeg();
+    }
+    
+    function drawGallows() {
+        ctx.beginPath();
+        ctx.moveTo(50, 220);
+        ctx.lineTo(250, 220);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(150, 220);
+        ctx.lineTo(150, 40);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(150, 40);
+        ctx.lineTo(220, 40);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(220, 40);
+        ctx.lineTo(220, 70);
+        ctx.stroke();
+    }
+    
+    function drawRope() {
+        ctx.beginPath();
+        ctx.moveTo(220, 70);
+        ctx.lineTo(220, 85);
+        ctx.stroke();
+    }
+    
+    function drawHead() {
+        ctx.beginPath();
+        ctx.arc(220, 100, 15, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    function drawLeftEye() {
+        ctx.beginPath();
+        ctx.arc(213, 95, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawRightEye() {
+        ctx.beginPath();
+        ctx.arc(227, 95, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    function drawNose() {
+        ctx.beginPath();
+        ctx.moveTo(220, 98);
+        ctx.lineTo(218, 104);
+        ctx.lineTo(222, 104);
+        ctx.fill();
+    }
+    
+    function drawMouth() {
+        ctx.beginPath();
+        ctx.arc(220, 110, 6, 0.05, Math.PI - 0.05);
+        ctx.stroke();
+    }
+    
+    function drawBody() {
+        ctx.beginPath();
+        ctx.moveTo(220, 115);
+        ctx.lineTo(220, 165);
+        ctx.stroke();
+    }
+    
+    function drawLeftArm() {
+        ctx.beginPath();
+        ctx.moveTo(220, 130);
+        ctx.lineTo(190, 150);
+        ctx.stroke();
+    }
+    
+    function drawRightArm() {
+        ctx.beginPath();
+        ctx.moveTo(220, 130);
+        ctx.lineTo(250, 150);
+        ctx.stroke();
+    }
+    
+    function drawLeftLeg() {
+        ctx.beginPath();
+        ctx.moveTo(220, 165);
+        ctx.lineTo(195, 200);
+        ctx.stroke();
+    }
+    
+    function drawRightLeg() {
+        ctx.beginPath();
+        ctx.moveTo(220, 165);
+        ctx.lineTo(245, 200);
+        ctx.stroke();
+    }
+    
+    // ----- woord weergave met underscores -----
+    function updateWordDisplay() {
+        let display = "";
+        for (let i = 0; i < secretWord.length; i++) {
+            let letter = secretWord[i];
+            if (guessedLetters.includes(letter)) {
+                display += letter + " ";
+            } else {
+                display += "_ ";
+            }
+        }
+        wordDisplayDiv.innerText = display.trim().toUpperCase();
+    }
+    
+    function checkWin() {
+        for (let i = 0; i < secretWord.length; i++) {
+            if (!guessedLetters.includes(secretWord[i])) return false;
+        }
+        return true;
+    }
+    
+    function endGame(win) {
+        gameActive = false;
+        if (win) {
+            messageDiv.innerHTML = "🎉 GEFELICITEERD! Je hebt het woord geraden! 🎉";
+            messageDiv.style.background = "#b5e3b5";
+        } else {
+            messageDiv.innerHTML = `😭 Helaas! Het woord was "${secretWord.toUpperCase()}". 😭 Druk op "Nieuw woord" om opnieuw te proberen.`;
+            messageDiv.style.background = "#ffe0cc";
+        }
+        document.querySelectorAll(".key-btn").forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add("disabled");
+        });
+    }
+    
+    function guessLetter(letter) {
+        if (!gameActive) return;
+        if (guessedLetters.includes(letter)) return;
+        
+        guessedLetters.push(letter);
+        let isCorrect = secretWord.includes(letter);
+        
+        if (!isCorrect) {
+            wrongGuesses++;
+            redrawAll();
+            if (wrongGuesses >= 12) {
+                endGame(false);
+            }
+        }
+        
+        updateWordDisplay();
+        
+        if (checkWin()) {
+            endGame(true);
+        } else if (!isCorrect && gameActive) {
+            let remaining = 12 - wrongGuesses;
+            messageDiv.innerHTML = `❌ Letter "${letter.toUpperCase()}" zit er niet in. Nog ${remaining} pogingen over.`;
+        } else if (isCorrect && gameActive) {
+            messageDiv.innerHTML = `✅ Goedzo! "${letter.toUpperCase()}" zit in het woord!`;
+        }
+        
+        const btn = document.getElementById(`key-${letter}`);
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add("disabled");
+        }
+    }
+    
+    function newGame() {
+        const randomIndex = Math.floor(Math.random() * wordsList.length);
+        secretWord = wordsList[randomIndex].toLowerCase();
+        guessedLetters = [];
+        wrongGuesses = 0;
+        gameActive = true;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateWordDisplay();
+        messageDiv.innerHTML = "🌸 Nieuw woord! Raad een letter. 🌸";
+        messageDiv.style.background = "#ffefbf";
+        
+        document.querySelectorAll(".key-btn").forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove("disabled");
+        });
+    }
+    
+    function buildKeyboard() {
+        keyboardDiv.innerHTML = "";
+        const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+        for (let letter of alphabet) {
+            const btn = document.createElement("button");
+            btn.textContent = letter.toUpperCase();
+            btn.classList.add("key-btn");
+            btn.id = `key-${letter}`;
+            btn.addEventListener("click", (function(l) {
+                return function() { guessLetter(l); };
+            })(letter));
+            keyboardDiv.appendChild(btn);
+        }
+    }
+    
+    resetBtn.addEventListener("click", () => newGame());
+    
+    buildKeyboard();
+    newGame();
+</script>
+</body>
+</html>
