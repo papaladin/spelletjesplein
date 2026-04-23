@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>📚 Rolluik – Vraagstukken (3e leerjaar)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #c8e8ff 0%, #a0d0f0 100%);
+            font-family: 'Segoe UI', 'Comic Neue', 'Fredoka One', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1100px;
+            width: 100%;
+            background: #fffef7;
+            border-radius: 70px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 12px #ffcd00, 0 0 0 16px #2c2b26;
+            padding: 25px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: #ffcd00;
+            display: inline-block;
+            padding: 8px 30px;
+            border-radius: 60px;
+            color: #2d2b20;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 0 #b47c00;
+        }
+
+        .window-area {
+            background: #87ceeb;
+            border-radius: 30px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 4px white, 0 8px 18px rgba(0,0,0,0.1);
+        }
+
+        .window-wrapper {
+            position: relative;
+            background: #d9b650;
+            border-radius: 25px;
+            overflow: hidden;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+        }
+
+        .window-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f9e7b3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .window-view img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+
+        .shutter {
+            background: repeating-linear-gradient(180deg, #c0a56b, #c0a56b 12px, #a8863a 12px, #a8863a 24px);
+            width: 100%;
+            height: 100%;
+            border-radius: 25px;
+            transition: height 0.2s ease-out;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 2;
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.3);
+        }
+
+        .progress-text {
+            margin-top: 8px;
+            font-weight: bold;
+            background: #2c2b26;
+            color: white;
+            display: inline-block;
+            padding: 4px 15px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+
+        .question-block {
+            background: #fef3cf;
+            border-radius: 50px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .question-text {
+            font-size: 1.6rem;
+            line-height: 1.3;
+            margin-bottom: 25px;
+            background: white;
+            padding: 15px;
+            border-radius: 50px;
+            color: #2d5720;
+        }
+
+        .answers {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .answer-btn {
+            background: #3f6792;
+            font-size: 1.3rem;
+            padding: 12px 25px;
+            min-width: 120px;
+            box-shadow: 0 5px 0 #1f3b55;
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 60px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.05s linear;
+        }
+
+        .answer-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #1f3b55;
+        }
+
+        .feedback {
+            font-size: 1.2rem;
+            margin: 15px;
+            padding: 10px;
+            border-radius: 40px;
+            background: white;
+        }
+
+        .reset-btn {
+            background: #ff8c42;
+            margin-top: 10px;
+            font-size: 1.2rem;
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 60px;
+            cursor: pointer;
+            padding: 10px 25px;
+            box-shadow: 0 4px 0 #aa5a1a;
+        }
+
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #aa5a1a;
+        }
+
+        @media (max-width: 700px) {
+            .question-text { font-size: 1.2rem; }
+            .answer-btn { font-size: 1.1rem; padding: 8px 18px; min-width: 90px; }
+            h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>📖 Vraagstukken – Rolluik 📖</h1>
+
+    <div class="window-area">
+        <div class="window-wrapper">
+            <div class="window-view" id="windowView"></div>
+            <div class="shutter" id="shutter" style="height: 100%;"></div>
+        </div>
+        <div class="progress-text" id="progressText">Open: 0 / 5</div>
+    </div>
+
+    <div class="question-block" id="questionBlock">
+        <div class="question-text" id="questionText">Laden...</div>
+        <div class="answers" id="answersContainer"></div>
+        <div class="feedback" id="feedbackMsg"></div>
+    </div>
+
+    <button id="resetGameBtn" class="reset-btn">🔄 Nieuw spel 🔄</button>
+</div>
+
+<script>
+    // ----- VOLLEDIGE VRAAGBANK (10 origineel + 14 nieuwe = 24 problemen) -----
+    const allProblems = [
+        // Originele 10
+        { text: "In de wei staan 8 koeien. Er komen nog 5 koeien bij. Hoeveel koeien staan er nu in de wei?", options: ["10", "12", "13"], correct: 2 },
+        { text: "Sanne plukt 24 appels. Ze stopt ze in manden van 6 appels per mand. Hoeveel manden heeft Sanne nodig?", options: ["3", "4", "5"], correct: 1 },
+        { text: "Tim heeft €2,50 in zijn spaarpot. Hij krijgt van oma nog €1,75. Hoeveel geld heeft Tim nu?", options: ["€4,00", "€4,25", "€4,50"], correct: 1 },
+        { text: "Juf heeft 36 stickers. Ze wil ze eerlijk verdelen over 6 kinderen. Hoeveel stickers krijgt elk kind?", options: ["5", "6", "7"], correct: 1 },
+        { text: "Een trein vertrekt met 45 passagiers. Op het eerste station stappen 12 passagiers uit en 8 passagiers in. Hoeveel passagiers zitten er nu in de trein?", options: ["41", "43", "45"], correct: 0 },
+        { text: "Voor een pannenkoek heb je 150 gram bloem nodig. Mama wil 5 pannenkoeken bakken. Hoeveel gram bloem heeft ze nodig?", options: ["650 gram", "700 gram", "750 gram"], correct: 2 },
+        { text: "In een doos zitten 28 chocolaatjes. Een groepje van 7 kinderen deelt ze eerlijk. Hoeveel chocolaatjes krijgt ieder?", options: ["4", "5", "6"], correct: 0 },
+        { text: "Lars is 1,35 m lang. Zijn vader is 1,80 m lang. Hoeveel centimeter is de vader langer dan Lars?", options: ["35 cm", "45 cm", "55 cm"], correct: 1 },
+        { text: "In de tuin lopen 3 konijnen. Elk konijn heeft 4 poten. Hoeveel poten hebben de konijnen samen?", options: ["10", "12", "15"], correct: 1 },
+        { text: "Op een verjaardag staan 12 kaarsjes op de taart. Tom heeft al 7 kaarsjes uitgeblazen. Hoeveel kaarsjes moet hij nog blazen?", options: ["4", "5", "6"], correct: 1 },
+        
+        // Nieuwe 14 problemen
+        { text: "In de pauze worden 54 zakjes popcorn verkocht. Ze zitten in doosjes van 6 zakjes per doos. Hoeveel doosjes zijn er nodig?", options: ["8", "9", "10"], correct: 1 },
+        { text: "In het zwembad zijn 120 kinderen. Er gaan 3 groepen van elk 8 kinderen naar huis. Hoeveel kinderen blijven er over?", options: ["96", "104", "88"], correct: 0 },
+        { text: "Een lolly kost €0,50. Noah heeft €3,00. Hoeveel lolly's kan hij kopen?", options: ["5", "6", "7"], correct: 1 },
+        { text: "Tom heeft 45 knikkers. Hij doet ze in zakjes van 5 knikkers. Hoeveel zakjes heeft hij?", options: ["8", "9", "10"], correct: 1 },
+        { text: "Mama bakt 48 koekjes. Ze stopt ze in trommels van 8 koekjes per trommel. Hoeveel trommels heeft ze nodig?", options: ["5", "6", "7"], correct: 1 },
+        { text: "In een trein zitten 36 mensen. Bij het eerste station stappen 12 mensen uit en 8 mensen in. Hoeveel mensen zitten er nu in de trein?", options: ["32", "30", "34"], correct: 0 },
+        { text: "Er gaan 4 klassen op schoolreis. Elke klas heeft 22 leerlingen. Hoeveel leerlingen gaan er in totaal mee?", options: ["84", "86", "88"], correct: 2 },
+        { text: "Voor 1 liter limonade heb je 4 citroenen nodig. Je wilt 7 liter maken. Hoeveel citroenen heb je nodig?", options: ["28", "26", "30"], correct: 0 },
+        { text: "Op een verjaardag zijn er 24 stukjes taart. Ieder kind krijgt 3 stukjes. Hoeveel kinderen zijn er?", options: ["6", "7", "8"], correct: 2 },
+        { text: "Sara spaart elke week €2,50. Na 8 weken koopt ze een boek van €12,00. Hoeveel euro houdt ze over?", options: ["€6,00", "€8,00", "€10,00"], correct: 1 },
+        { text: "Een boek heeft 96 bladzijden. Jens leest elke dag 12 bladzijden. Hoeveel dagen doet hij over het boek?", options: ["7", "8", "9"], correct: 1 },
+        { text: "Een taart is verdeeld in 10 gelijke punten. Omar eet 3 punten en zijn zus eet 2 punten. Hoeveel punten blijven er over?", options: ["4", "5", "6"], correct: 1 },
+        { text: "In een fruitmand liggen 5 appels, 7 bananen en 4 peren. Hoeveel stuks fruit liggen er in totaal?", options: ["14", "15", "16"], correct: 2 },
+        { text: "Mees wandelt 3 kilometer per uur. Hoe ver wandelt hij in 4 uur?", options: ["10 km", "12 km", "14 km"], correct: 1 }
+    ];
+
+    // ----- DIERENAFBEELDINGEN (Landscape, 16:9, van Lorem Picsum via acidtone/animals-ids) -----
+    const animalIds = [
+        1024, 1025, 1069, 1074, 1084, 237, 433, 577, 582, 593, 659, 718, 823, 92, 95
+    ];
+
+    // Spelvariabelen
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let correctCount = 0;
+    let gameFinished = false;
+    let answered = false;
+    let currentProblem = null;
+
+    const shutterDiv = document.getElementById("shutter");
+    const progressSpan = document.getElementById("progressText");
+    const questionText = document.getElementById("questionText");
+    const answersDiv = document.getElementById("answersContainer");
+    const feedbackMsg = document.getElementById("feedbackMsg");
+    const resetBtn = document.getElementById("resetGameBtn");
+    const windowView = document.getElementById("windowView");
+
+    // ----- Laad een willekeurige dierafbeelding (landscape 16:9) -----
+    async function loadRandomAnimalImage() {
+        const randomId = animalIds[Math.floor(Math.random() * animalIds.length)];
+        const imageUrl = `https://picsum.photos/id/${randomId}/400/225`;
+        
+        const imgElement = document.createElement("img");
+        imgElement.src = imageUrl;
+        imgElement.alt = "Schattig dier";
+        imgElement.style.width = "100%";
+        imgElement.style.height = "100%";
+        imgElement.style.objectFit = "cover";
+        
+        imgElement.onerror = () => {
+            imgElement.src = "https://placekitten.com/400/225";
+            imgElement.alt = "Schattige kitten (fallback)";
+        };
+        
+        windowView.innerHTML = "";
+        windowView.appendChild(imgElement);
+    }
+
+    // ----- KIES 5 WILLEKEURIGE VERSCHILLENDE VRAGEN -----
+    function selectRandomQuestions() {
+        const shuffled = [...allProblems];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, 5);
+    }
+
+    // Rolluik bijwerken
+    function updateShutter() {
+        const percent = (correctCount / currentQuestions.length) * 100;
+        shutterDiv.style.height = (100 - percent) + "%";
+        progressSpan.innerText = `Open: ${correctCount} / ${currentQuestions.length}`;
+        if (correctCount === currentQuestions.length) {
+            gameFinished = true;
+            document.getElementById("questionBlock").style.display = "none";
+            feedbackMsg.innerHTML = "🎉 Proficiat! Het rolluik is helemaal open! 🎉<br>Klik op 'Nieuw spel' voor een nieuwe uitdaging.";
+        }
+    }
+
+    // Huidige vraag laden
+    function loadQuestion() {
+        if (gameFinished) return;
+        if (currentIndex >= currentQuestions.length) return;
+        currentProblem = currentQuestions[currentIndex];
+        questionText.innerText = currentProblem.text;
+        answersDiv.innerHTML = "";
+        for (let i = 0; i < currentProblem.options.length; i++) {
+            const btn = document.createElement("button");
+            btn.innerText = currentProblem.options[i];
+            btn.classList.add("answer-btn");
+            btn.addEventListener("click", (function(idx) {
+                return function() { checkAnswer(idx); };
+            })(i));
+            answersDiv.appendChild(btn);
+        }
+        feedbackMsg.innerHTML = "Kies het juiste antwoord!";
+        answered = false;
+    }
+
+    // Antwoord controleren
+    function checkAnswer(selectedIdx) {
+        if (gameFinished || answered) return;
+        const isCorrect = (selectedIdx === currentProblem.correct);
+        if (isCorrect) {
+            correctCount++;
+            updateShutter();
+            feedbackMsg.innerHTML = "✅ Juist! Goed gedaan! ✅";
+            answered = true;
+            currentIndex++;
+            if (currentIndex < currentQuestions.length && correctCount < currentQuestions.length) {
+                loadQuestion();
+            } else if (correctCount === currentQuestions.length) {
+                updateShutter();
+            }
+        } else {
+            feedbackMsg.innerHTML = "❌ Helaas, dat is niet juist. Probeer nog een keer! ❌";
+        }
+    }
+
+    // Spel resetten
+    function resetGame() {
+        currentQuestions = selectRandomQuestions();
+        currentIndex = 0;
+        correctCount = 0;
+        gameFinished = false;
+        answered = false;
+        shutterDiv.style.height = "100%";
+        progressSpan.innerText = `Open: 0 / ${currentQuestions.length}`;
+        document.getElementById("questionBlock").style.display = "block";
+        loadRandomAnimalImage();
+        loadQuestion();
+        feedbackMsg.innerHTML = "Nieuw spel! Beantwoord elke vraag correct om het rolluik te openen.";
+    }
+
+    resetBtn.addEventListener("click", resetGame);
+    resetGame();
+</script>
+</body>
+</html>
