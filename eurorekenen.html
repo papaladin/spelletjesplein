@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>💰 Eurorekenen | Hoeveel euro zie je hier liggen?</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f2e6 0%, #e8e2d0 100%);
+            font-family: 'Segoe UI', 'Fredoka One', 'Comic Neue', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1300px;
+            width: 100%;
+            background: #fffef7;
+            border-radius: 64px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 12px #ffcd00, 0 0 0 16px #2c2b26;
+            padding: 20px 20px 35px;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Cabin Sketch', 'Segoe UI', cursive;
+            font-size: 2.4rem;
+            color: #2d2b20;
+            background: #ffcd00;
+            display: inline-block;
+            width: auto;
+            margin: 0 auto 20px;
+            padding: 8px 30px;
+            border-radius: 60px;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 0 #b47c00;
+            transform: translateY(-3px);
+        }
+
+        .setup-screen {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .setup-screen h2 {
+            font-size: 1.8rem;
+            color: #2d2b20;
+            margin-bottom: 30px;
+        }
+
+        .difficulty-panel {
+            background: #fef3cf;
+            border-radius: 80px;
+            padding: 20px;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            align-items: center;
+            border: 2px solid #ffcd00;
+            max-width: 700px;
+        }
+
+        .difficulty-panel span {
+            font-weight: bold;
+            font-size: 1.2rem;
+            background: white;
+            padding: 6px 18px;
+            border-radius: 50px;
+            color: #5a3e0b;
+        }
+
+        button {
+            background: #2c3e2f;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 8px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            font-family: inherit;
+            box-shadow: 0 4px 0 #141d11;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #141d11;
+        }
+
+        .level-btn.active {
+            background: #ffb347;
+            color: #2c2b26;
+            box-shadow: 0 0 0 2px #ffcd00, 0 4px 0 #8b6200;
+        }
+
+        .start-btn {
+            background: #2c7a2d;
+            font-size: 1.4rem;
+            padding: 12px 32px;
+            margin-top: 25px;
+            box-shadow: 0 6px 0 #154e15;
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        .money-area {
+            background: #efe2ba;
+            border-radius: 70px;
+            padding: 30px 20px;
+            margin: 20px 0;
+            min-height: 360px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            border: 4px dashed #c2a144;
+            box-shadow: inset 0 0 0 4px #fff2cf, 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+        .money-item {
+            background: white;
+            border-radius: 24px;
+            padding: 12px 10px 8px;
+            text-align: center;
+            box-shadow: 0 12px 18px -8px rgba(0,0,0,0.2);
+            width: 130px;
+        }
+
+        .money-item img {
+            width: 110px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+            border-radius: 12px;
+        }
+
+        .answer-zone {
+            background: #f9f1dc;
+            border-radius: 60px;
+            padding: 20px;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 5px 20px 5px 25px;
+            border-radius: 90px;
+            box-shadow: inset 0 1px 4px #0001, 0 6px 12px rgba(0,0,0,0.05);
+        }
+
+        .input-row span {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e6a100;
+        }
+
+        #amountInput {
+            font-size: 2rem;
+            width: 180px;
+            text-align: center;
+            border: 2px solid #ffcd00;
+            border-radius: 48px;
+            padding: 10px 0;
+            font-weight: bold;
+            font-family: monospace;
+            background: #fff6e0;
+        }
+
+        .button-pair {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .step-btn {
+            background: #e0a800;
+            font-size: 1.3rem;
+            padding: 8px 20px;
+            box-shadow: 0 3px 0 #8b6200;
+            min-width: 80px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .check-btn {
+            background: #2c7a2d;
+            font-size: 1.4rem;
+            padding: 12px 32px;
+        }
+
+        .new-btn {
+            background: #3f6792;
+        }
+
+        .feedback {
+            text-align: center;
+            font-size: 1.7rem;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 12px;
+            background: #fff2cf;
+            border-radius: 60px;
+            transition: 0.1s;
+        }
+
+        .correct-feedback {
+            background: #b5e3b5;
+            color: #1f4f1a;
+            border-left: 12px solid #2e7d32;
+        }
+
+        .wrong-feedback {
+            background: #ffe0cc;
+            color: #b13e00;
+            border-left: 12px solid #c73600;
+        }
+
+        @media (max-width: 700px) {
+            .money-item { width: 100px; }
+            .money-item img { width: 85px; }
+            #amountInput { font-size: 1.5rem; width: 140px; }
+            .step-btn { font-size: 1rem; padding: 6px 12px; min-width: 65px; }
+            h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div style="text-align: center">
+        <h1>💶 Hoeveel euro zie je hier liggen? 💶</h1>
+    </div>
+
+    <!-- KEUZESCHERM -->
+    <div id="setupScreen" class="setup-screen">
+        <h2>📋 Kies eerst het niveau en of je centen wilt oefenen</h2>
+        <div class="difficulty-panel">
+            <span>🎯 Maximaal bedrag:</span>
+            <button id="levelEasySetup" class="level-btn" data-max="20">💰 tot 20 euro</button>
+            <button id="levelMediumSetup" class="level-btn" data-max="100">💵 tot 100 euro</button>
+            <button id="levelHardSetup" class="level-btn" data-max="1000">💶 tot 1000 euro</button>
+        </div>
+        <div class="difficulty-panel">
+            <span>🪙 Eurocenten:</span>
+            <button id="toggleCentsSetupBtn">🔄 ZONDER eurocenten</button>
+        </div>
+        <button id="startGameBtn" class="start-btn">🚀 START MET TELLEN 🚀</button>
+    </div>
+
+    <!-- SPELSCHERM -->
+    <div id="gameScreen" class="game-screen">
+        <div id="moneyDisplay" class="money-area">
+            <div style="text-align:center; width:100%;">✨ Klik op START ✨</div>
+        </div>
+
+        <div class="answer-zone">
+            <div class="input-row">
+                <span>€</span>
+                <input type="text" id="amountInput" value="0" placeholder="0.00">
+            </div>
+            <div class="button-pair">
+                <button id="incEuroBtn" class="step-btn">+1 €</button>
+                <button id="decEuroBtn" class="step-btn">-1 €</button>
+                <button id="incCentBtn" class="step-btn">+0,01 €</button>
+                <button id="decCentBtn" class="step-btn">-0,01 €</button>
+            </div>
+            <div class="action-buttons">
+                <button class="check-btn" id="checkBtn">✅ NAKIJKEN</button>
+                <button class="new-btn" id="newPuzzleBtn">🔄 NIEUWE PUZZEL</button>
+            </div>
+        </div>
+        <div id="feedbackMessage" class="feedback">⭐ Tel het geld en voer het bedrag in! ⭐</div>
+    </div>
+</div>
+
+<script>
+    // ---------- IMAGE URLS (correcte pad) ----------
+    const IMAGE_BASE = "https://www.computermeester.be/images/euros/";
+
+    function getImageUrl(value) {
+        if (value < 1) {
+            let cents = Math.round(value * 100);
+            return `${IMAGE_BASE}${cents}c.png`;
+        } else {
+            return `${IMAGE_BASE}${value}.png`;
+        }
+    }
+
+    // Beschikbare biljetten en munten (alleen hele euro's en centen)
+    const banknotes = [5, 10, 20, 50, 100, 200, 500];
+    const coinsFull = [0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 1, 2];
+
+    // Spelvariabelen
+    let currentMax = 2000;       // in centen (20 euro standaard)
+    let includeCents = false;
+    let currentPuzzleItems = [];
+    let currentTotalCents = 0;
+    let gameActive = true;
+
+    // DOM elementen
+    const setupScreen = document.getElementById('setupScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const startBtn = document.getElementById('startGameBtn');
+    const levelEasy = document.getElementById('levelEasySetup');
+    const levelMedium = document.getElementById('levelMediumSetup');
+    const levelHard = document.getElementById('levelHardSetup');
+    const toggleCentsBtn = document.getElementById('toggleCentsSetupBtn');
+
+    const moneyDisplayDiv = document.getElementById('moneyDisplay');
+    const amountInput = document.getElementById('amountInput');
+    const feedbackDiv = document.getElementById('feedbackMessage');
+    const checkBtn = document.getElementById('checkBtn');
+    const newPuzzleBtn = document.getElementById('newPuzzleBtn');
+    const incEuroBtn = document.getElementById('incEuroBtn');
+    const decEuroBtn = document.getElementById('decEuroBtn');
+    const incCentBtn = document.getElementById('incCentBtn');
+    const decCentBtn = document.getElementById('decCentBtn');
+
+    // Helper: parse input met komma of punt
+    function parseAmount(valueStr) {
+        if (!valueStr) return NaN;
+        let normalized = valueStr.replace(',', '.');
+        return parseFloat(normalized);
+    }
+
+    // Highlight geselecteerde max knop
+    function setActiveLevelButton(activeButton) {
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        activeButton.classList.add('active');
+    }
+
+    function setMaxLevel(euro, buttonElement) {
+        currentMax = euro * 100;
+        setActiveLevelButton(buttonElement);
+    }
+
+    function toggleCentsMode() {
+        includeCents = !includeCents;
+        toggleCentsBtn.innerHTML = includeCents ? '🪙 MET eurocenten (0,01 - 0,50) 🪙' : '🪙 ZONDER eurocenten (alleen hele euro\'s) 🪙';
+    }
+
+    // Genereer willekeurige set van 4 tot 10 items waarbij de totale som <= currentMax
+    function generateRandomPuzzle() {
+        let availableNotes = banknotes.filter(n => n * 100 <= currentMax);
+        let availableCoins = includeCents ? coinsFull : coinsFull.filter(c => c >= 1);
+        availableCoins = availableCoins.filter(c => c * 100 <= currentMax);
+        
+        // Alle mogelijke items (notes + coins) als objecten
+        let allItems = [];
+        availableNotes.forEach(n => allItems.push({ valueCents: n * 100, euroValue: n, isNote: true }));
+        availableCoins.forEach(c => allItems.push({ valueCents: c * 100, euroValue: c, isNote: false }));
+        
+        if (allItems.length === 0) allItems = [{ valueCents: 100, euroValue: 1, isNote: false }]; // fallback
+        
+        let targetItemCount = Math.floor(Math.random() * 7) + 4; // 4 tot 10
+        let items = [];
+        let totalCents = 0;
+        let attempts = 0;
+        const maxAttempts = 200;
+        
+        while (items.length < targetItemCount && attempts < maxAttempts) {
+            // Kies een willekeurig item uit alleItems
+            let candidate = allItems[Math.floor(Math.random() * allItems.length)];
+            let newTotal = totalCents + candidate.valueCents;
+            if (newTotal <= currentMax) {
+                items.push({ ...candidate });
+                totalCents = newTotal;
+            }
+            attempts++;
+            // Als we vastlopen en nog geen 4 items hebben, voegen we het kleinste item toe
+            if (attempts > 100 && items.length < 4) {
+                let smallest = allItems.reduce((a, b) => (a.valueCents < b.valueCents ? a : b));
+                if (totalCents + smallest.valueCents <= currentMax) {
+                    items.push({ ...smallest });
+                    totalCents += smallest.valueCents;
+                } else {
+                    // kan niet, stop
+                    break;
+                }
+            }
+        }
+        
+        // Zorg dat er minimaal 4 items zijn (indien mogelijk)
+        while (items.length < 4 && totalCents < currentMax) {
+            let smallest = allItems.reduce((a, b) => (a.valueCents < b.valueCents ? a : b));
+            if (totalCents + smallest.valueCents <= currentMax) {
+                items.push({ ...smallest });
+                totalCents += smallest.valueCents;
+            } else {
+                break;
+            }
+        }
+        
+        // Sorteer items van groot naar klein (voor de display)
+        items.sort((a, b) => b.valueCents - a.valueCents);
+        
+        return items;
+    }
+
+    // Render alleen afbeeldingen, geen tekst onder de afbeelding
+    function renderPuzzle() {
+        moneyDisplayDiv.innerHTML = '';
+        for (let item of currentPuzzleItems) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'money-item';
+
+            const img = document.createElement('img');
+            const imgUrl = getImageUrl(item.euroValue);
+            img.src = imgUrl;
+            img.alt = `€ ${item.euroValue}`;
+            img.style.width = '110px';
+            img.style.height = 'auto';
+            img.style.borderRadius = '12px';
+
+            // Fallback SVG als afbeelding niet bestaat (maar zou moeten werken met echte URLs)
+            img.onerror = () => {
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("width", "110");
+                svg.setAttribute("height", "80");
+                svg.setAttribute("viewBox", "0 0 120 80");
+                if (item.isNote) {
+                    svg.innerHTML = `<rect width="118" height="66" rx="8" fill="#B0D9B1" stroke="#D4AF37" stroke-width="2"/><text x="60" y="40" font-size="20" font-weight="bold" fill="#2d5720" text-anchor="middle">€${item.euroValue}</text>`;
+                } else {
+                    svg.innerHTML = `<circle cx="40" cy="40" r="36" fill="#E5C56A" stroke="#DAA520" stroke-width="2"/><text x="40" y="48" font-size="18" font-weight="bold" fill="#3c280a" text-anchor="middle">€${item.euroValue}</text>`;
+                }
+                img.replaceWith(svg);
+            };
+
+            wrapper.appendChild(img);
+            moneyDisplayDiv.appendChild(wrapper);
+        }
+
+        currentTotalCents = currentPuzzleItems.reduce((sum, i) => sum + i.valueCents, 0);
+    }
+
+    function generateNewPuzzle() {
+        currentPuzzleItems = generateRandomPuzzle();
+        renderPuzzle();
+        amountInput.value = '';
+        feedbackDiv.innerHTML = '🤔 Hoeveel is het totaal? Typ het bedrag of gebruik de knoppen! 🤔';
+        feedbackDiv.classList.remove('correct-feedback', 'wrong-feedback');
+        gameActive = true;
+    }
+
+    function checkAnswer() {
+        if (!gameActive) return;
+        let rawValue = amountInput.value.trim();
+        if (rawValue === '') {
+            feedbackDiv.innerHTML = '💡 Vul een bedrag in of gebruik de + / - knoppen! 💡';
+            return;
+        }
+        let userAmount = parseAmount(rawValue);
+        if (isNaN(userAmount)) {
+            feedbackDiv.innerHTML = '❌ Gebruik een punt of komma, bijvoorbeeld 12.50 of 12,50 ❌';
+            return;
+        }
+        let userCents = Math.round(userAmount * 100);
+        if (userCents === currentTotalCents) {
+            feedbackDiv.innerHTML = '🎉🎉 PROficiat! Helemaal juist! 🎉🎉 <br> ➕ Klik op "NIEUWE PUZZEL" voor meer oefening!';
+            feedbackDiv.classList.add('correct-feedback');
+            feedbackDiv.classList.remove('wrong-feedback');
+            gameActive = false;
+        } else {
+            let correctEuro = (currentTotalCents / 100).toFixed(2).replace('.', ',');
+            let userEuro = userAmount.toFixed(2).replace('.', ',');
+            feedbackDiv.innerHTML = `🙈 Niet goed! Het juiste bedrag is € ${correctEuro}. Jij koos € ${userEuro}. Probeer opnieuw! 🙈`;
+            feedbackDiv.classList.add('wrong-feedback');
+            feedbackDiv.classList.remove('correct-feedback');
+        }
+    }
+
+    // Increment / decrement functies
+    function addToAmount(deltaEuro) {
+        let current = parseAmount(amountInput.value);
+        if (isNaN(current)) current = 0;
+        let newVal = current + deltaEuro;
+        if (newVal < 0) newVal = 0;
+        // Maximaal iets boven de maximale puzzelwaarde (niet hoger dan 2x max)
+        let maxAllowed = (currentMax / 100) * 1.2;
+        if (newVal > maxAllowed) newVal = maxAllowed;
+        amountInput.value = newVal.toFixed(2).replace('.', ',');
+    }
+
+    // Start spel
+    function startGame() {
+        setupScreen.style.display = 'none';
+        gameScreen.style.display = 'block';
+        generateNewPuzzle();
+    }
+
+    // Event listeners setup
+    levelEasy.addEventListener('click', () => setMaxLevel(20, levelEasy));
+    levelMedium.addEventListener('click', () => setMaxLevel(100, levelMedium));
+    levelHard.addEventListener('click', () => setMaxLevel(1000, levelHard));
+    toggleCentsBtn.addEventListener('click', toggleCentsMode);
+    startBtn.addEventListener('click', startGame);
+
+    // Game event listeners
+    checkBtn.addEventListener('click', checkAnswer);
+    newPuzzleBtn.addEventListener('click', generateNewPuzzle);
+    incEuroBtn.addEventListener('click', () => addToAmount(1));
+    decEuroBtn.addEventListener('click', () => addToAmount(-1));
+    incCentBtn.addEventListener('click', () => addToAmount(0.01));
+    decCentBtn.addEventListener('click', () => addToAmount(-0.01));
+    amountInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    // Initialiseer setup
+    setActiveLevelButton(levelEasy);
+    includeCents = false;
+    currentMax = 2000;
+    toggleCentsBtn.innerHTML = '🪙 ZONDER eurocenten (alleen hele euro\'s) 🪙';
+</script>
+</body>
+</html>
